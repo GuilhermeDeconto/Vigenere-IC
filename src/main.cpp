@@ -1,6 +1,7 @@
 #include "io.h"
 #include "main.h"
 #include "CoincidenceIndex.h"
+#include <omp.h>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ static unordered_map<char, double> englishProbability = {
         {'s',0.06327}, {'t',0.09056}, {'u',0.02758}, {'v',0.00978}, {'w',0.02360}, {'x',0.00150},
         {'y',0.01974}, {'z',0.00074}};
 
-static unordered_map<char, double> portugueseProbability = {
+static vector<pair<char, double>> portugueseProbability = {
         {'a',0.14634}, {'b',0.01043}, {'c',0.03882}, {'d',0.04992}, {'e',0.1257}, {'f',0.01023},
         {'g',0.01303}, {'h',0.00781}, {'i',0.06186}, {'j',0.00397}, {'k',0.00015}, {'l',0.02779},
         {'m',0.04738}, {'n',0.04446}, {'o',0.09735}, {'p',0.02523}, {'q',0.01204}, {'r',0.06530},
@@ -48,12 +49,15 @@ int main::estimateKeyLength(string inputFile) {
     double languageIoC = 0.06653846153846153;
     double randomIoC = 0.038461538461538464;
 
-    unordered_map<int, double> possibleLength;
+    vector<pair<int, double>> possibleLength;
 
     int inputFileSize = inputFile.size();
 
+    #pragma omp declare reduction (merge : vector<pair<int, double>> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
+    #pragma omp parallel for default(none) shared(inputFileSize, inputFile, languageIoC, randomIoC) reduction(merge:possibleLength)
     for (int i = 1; i < 15; ++i) {
         string buffer;
+
         for (int j = 0; j < inputFileSize; j += i) buffer += inputFile[j];
 
         double ioc = CoincidenceIndex::calculateIoC(buffer);
@@ -62,12 +66,13 @@ int main::estimateKeyLength(string inputFile) {
         double distanceToRandomIoC = abs(ioc - randomIoC);
 
         if (distanceToLanguageIoC < distanceToRandomIoC) {
-            possibleLength[i] = ioc;
+            possibleLength.emplace_back(i, ioc);
         }
     }
 
     double bestIoC;
     int keyLength;
+
 
     for(auto const& [key, val] : possibleLength) {
         if(bestIoC < val) {
@@ -82,6 +87,7 @@ int main::estimateKeyLength(string inputFile) {
 string main::decipher(string input, string key) {
     string decryptedText;
 
+    #pragma omp parallel for default(none) shared(input, key) reduction(+:decryptedText)
     for (int i = 0; i < input.size(); ++i) {
         int position = (input[i] - key[i % key.length()] + 26) % 26;
         position += 'a';
@@ -101,6 +107,7 @@ string main::findKey(string input, int keyLength)
         text[position] += input[i];
     }
 
+    #pragma omp parallel for default(none) shared(text) reduction(+:key)
     for (int i = 0; i < text.size(); ++i) {
         key += frequencyAnalysis(text[i]);
     }
@@ -110,19 +117,22 @@ string main::findKey(string input, int keyLength)
 
 char main::frequencyAnalysis(string text)
 {
-    unordered_map<char, int> lettersFrequency;
+    vector<pair<char, int>> lettersFrequency;
 
     for (int i = 0; i < text.length(); i++) {
         char charAt;
         charAt = text[i];
-        if (lettersFrequency.count(charAt)) {
-            lettersFrequency[charAt]++;
+        auto test = find_if(lettersFrequency.begin(), lettersFrequency.end(), [&](pair<char, int> const & ref) {
+            return ref.first == charAt;
+        });
+        if (test != lettersFrequency.end()) {
+            test->second++;
         } else {
-            lettersFrequency[charAt] = 1;
+            lettersFrequency.emplace_back(charAt, 1);
         }
     }
 
-    unordered_map<char, int> chiSquaredDictionary;
+    vector<pair<char, int>> chiSquaredDictionary;
 
     for(int i = 0; i < alphabet.length(); i++) {
         double chiSquared = 0;
@@ -131,22 +141,24 @@ char main::frequencyAnalysis(string text)
             if (newIndex > 25) {
                 newIndex = newIndex - 26;
             }
-
-            if (lettersFrequency.count(alphabet.at(newIndex))) {
-                int letterFrequency = lettersFrequency[alphabet.at(newIndex)];
-                double mtFreq = portugueseProbability[key] * text.length();
+            auto test = find_if(lettersFrequency.begin(), lettersFrequency.end(), [&](pair<char, int> const & ref) {
+                return ref.first == alphabet.at(newIndex);
+            });
+            if (test != lettersFrequency.end()) {
+                int letterFrequency = test->second;
+                double mtFreq = val * text.length();
                 chiSquared += pow(letterFrequency - mtFreq, 2) / mtFreq;
             }
         }
-        chiSquaredDictionary[alphabet.at(i)] =  chiSquared;
+        chiSquaredDictionary.emplace_back(alphabet.at(i), chiSquared);
     }
 
     double lowerChiSquared = numeric_limits<double>::infinity();
     char keyLetter = ' ';
 
     for (auto const& [key, val] : chiSquaredDictionary) {
-        if (chiSquaredDictionary[key] < lowerChiSquared ) {
-            lowerChiSquared = chiSquaredDictionary[key];
+        if (val < lowerChiSquared ) {
+            lowerChiSquared = val;
             keyLetter = key;
         }
     }
