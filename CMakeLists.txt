@@ -15,7 +15,7 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
-add_executable(Vigenere_IC src/main.cpp src/io.cpp src/io.h src/main.h)
+add_executable(Vigenere_IC src/main.cpp src/io.cpp src/io.h src/main.h src/CoincidenceIndex.cpp src/CoincidenceIndex.h)
 
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD

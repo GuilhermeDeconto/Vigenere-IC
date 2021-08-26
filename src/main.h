@@ -7,10 +7,15 @@
 
 #include <iostream>
 #include <chrono>
+#include <string>
+#include <map>
+#include <cmath>
+#include <vector>
+#include <cmath>
 
 class main {
 
-
+public: static int estimateKeyLength(string inputFile);
 
 };
 
