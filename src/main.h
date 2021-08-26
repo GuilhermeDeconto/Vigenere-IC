@@ -16,6 +16,7 @@
 class main {
 
 public: static int estimateKeyLength(string inputFile);
+public: static vector<string> findKey(string file, int keyLength);
 
 };
 

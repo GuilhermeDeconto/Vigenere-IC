@@ -13,16 +13,16 @@ double CoincidenceIndex::calculateIoC(const string& input) {
         if (occurrences.count(letter) != 0) {
             occurrences[letter] += 1;
         }else {
-            occurrences.insert(std::pair<char, int>(letter,0));
+            occurrences[letter] = 1;
         }
     }
 
-    int totalSum = 0;
+    double totalSum = 0.0;
     for (char letter: alphabet) {
         if (occurrences.count(letter) == 0) continue;
 
         int occurrenceCount = occurrences[letter];
-        double letterIncidence = (occurrenceCount * (occurrenceCount - 1));
+        double letterIncidence = (occurrenceCount - 1.0) * occurrenceCount;
 
         totalSum += letterIncidence;
     }

@@ -28,6 +28,8 @@ int main() {
 
     int keyLength = main::estimateKeyLength(input);
 
+    vector<string> text = main::findKey(input, keyLength);
+
     //Ending chrono clock
     auto end = chrono::steady_clock::now();
     //Checking elapsed time
@@ -42,7 +44,7 @@ int main::estimateKeyLength(string inputFile) {
 
     map<int, double> possibleLength;
 
-    for (int i = 1; i < 100; ++i) {
+    for (int i = 1; i < 15; ++i) {
         string buffer;
         for (int j = 0; j < inputFile.size(); j += i) buffer += inputFile[j];
 
@@ -52,7 +54,7 @@ int main::estimateKeyLength(string inputFile) {
         double distanceToRandomIoC = abs(ioc - randomIoC);
 
         if (distanceToLanguageIoC < distanceToRandomIoC) {
-            possibleLength.insert(std::pair<int, double>(i,ioc));
+            possibleLength[i] = ioc;
         }
     }
 
@@ -66,4 +68,16 @@ int main::estimateKeyLength(string inputFile) {
         }
     }
     return keyLength;
+}
+
+vector<string> main::findKey(string input, int keyLength)
+{
+    vector<string> text (keyLength);
+
+    for (int i = 0; i < input.length(); i++) {
+        int position = i % keyLength;
+        text[position] = text[position] + input.at(i);
+    }
+
+    return text;
 }
