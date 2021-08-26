@@ -30,8 +30,11 @@ int main() {
 
     string key = main::findKey(input, keyLength);
 
+    string decryptedText = main::decipher(input, key);
+
     cout << "Key Length: " << keyLength << endl;
     cout << "Key: " << key << endl;
+    cout << decryptedText << endl;
 
     //Ending chrono clock
     auto end = chrono::steady_clock::now();
@@ -74,6 +77,18 @@ int main::estimateKeyLength(string inputFile) {
     }
 
     return keyLength;
+}
+
+string main::decipher(string input, string key) {
+    string decryptedText;
+
+    for (int i = 0; i < input.size(); ++i) {
+        int position = (input[i] - key[i % key.length()] + 26) % 26;
+        position += 'a';
+        char letter = position;
+        decryptedText += letter;
+    }
+    return decryptedText;
 }
 
 string main::findKey(string input, int keyLength)

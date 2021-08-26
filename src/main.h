@@ -18,6 +18,7 @@ class main {
 public: static int estimateKeyLength(string inputFile);
 public: static string findKey(string file, int keyLength);
 public: static char frequencyAnalysis(string text);
+public: static string decipher(string input, string key);
 
 };
 
