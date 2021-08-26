@@ -8,15 +8,16 @@
 #include <iostream>
 #include <chrono>
 #include <string>
-#include <map>
 #include <cmath>
 #include <vector>
 #include <cmath>
+#include <unordered_map>
 
 class main {
 
 public: static int estimateKeyLength(string inputFile);
-public: static vector<string> findKey(string file, int keyLength);
+public: static string findKey(string file, int keyLength);
+public: static char frequencyAnalysis(string text);
 
 };
 
