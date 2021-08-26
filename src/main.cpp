@@ -34,10 +34,11 @@ int main() {
 
     cout << "Key Length: " << keyLength << endl;
     cout << "Key: " << key << endl;
-    cout << decryptedText << endl;
+    cout << "Decrypted text wrote to output file" << endl;
+//    cout << decryptedText << endl;
 
-    std::ofstream out("output.txt");
-    out <<"Key Length: " << keyLength << endl;
+    ofstream out("output.txt");
+    out << "Key Length: " << keyLength << endl;
     out << "Key: " << key << endl;
     out << decryptedText << endl;
     out.close();
