@@ -2,32 +2,38 @@
 // Created by Guilherme Deconto on 8/26/21.
 //
 
+#include <vector>
 #include "CoincidenceIndex.h"
 
 static string alphabet = "abcdefghijklmnopqrstuvwxyz";
 
 double CoincidenceIndex::calculateIoC(const string& input) {
-    unordered_map<char, int> occurrences;
-    int inputSize = input.size();
+    vector<pair<char, int>> occurrences;
 
+    int inputSize = input.size();
     for (char letter: input) {
-        if (occurrences.count(letter) != 0) {
-            occurrences[letter] += 1;
+        auto test = find_if(occurrences.begin(), occurrences.end(), [&](pair<char, int> const & ref) {
+            return ref.first == letter;
+        });
+        if (test != occurrences.end()) {
+            test->second += 1;
         }else {
-            occurrences[letter] = 1;
+            occurrences.emplace_back(letter, 1);
         }
     }
 
     double totalSum = 0.0;
     for (char letter: alphabet) {
-        if (occurrences.count(letter) == 0) continue;
+        auto test = find_if(occurrences.begin(), occurrences.end(), [&](pair<char, int> const & ref) {
+            return ref.first == letter;
+        });
+        if (test == occurrences.end()) continue;
 
-        int occurrenceCount = occurrences[letter];
+        int occurrenceCount = test->second;
         double letterIncidence = (occurrenceCount - 1.0) * occurrenceCount;
 
         totalSum += letterIncidence;
     }
-
     double ioc = totalSum / (inputSize * (inputSize - 1.0));
 
     return ioc;
