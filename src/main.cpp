@@ -36,6 +36,12 @@ int main() {
     cout << "Key: " << key << endl;
     cout << decryptedText << endl;
 
+    std::ofstream out("output.txt");
+    out <<"Key Length: " << keyLength << endl;
+    out << "Key: " << key << endl;
+    out << decryptedText << endl;
+    out.close();
+
     //Ending chrono clock
     auto end = chrono::steady_clock::now();
     //Checking elapsed time
