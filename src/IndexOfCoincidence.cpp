@@ -3,11 +3,11 @@
 //
 
 #include <vector>
-#include "CoincidenceIndex.h"
+#include "IndexOfCoincidence.h"
 
 static string alphabet = "abcdefghijklmnopqrstuvwxyz";
 
-double CoincidenceIndex::calculateIoC(const string& input) {
+double IndexOfCoincidence::calculateIoC(const string& input) {
     vector<pair<char, int>> occurrences;
 
     int inputSize = input.size();

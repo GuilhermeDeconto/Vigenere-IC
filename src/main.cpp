@@ -1,7 +1,6 @@
 #include "io.h"
 #include "main.h"
-#include "CoincidenceIndex.h"
-#include <omp.h>
+#include "IndexOfCoincidence.h"
 
 using namespace std;
 
@@ -60,7 +59,7 @@ int main::estimateKeyLength(string inputFile) {
 
         for (int j = 0; j < inputFileSize; j += i) buffer += inputFile[j];
 
-        double ioc = CoincidenceIndex::calculateIoC(buffer);
+        double ioc = IndexOfCoincidence::calculateIoC(buffer);
 
         double distanceToLanguageIoC = languageIoC - ioc;
         double distanceToRandomIoC = abs(ioc - randomIoC);
