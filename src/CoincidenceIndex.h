@@ -6,7 +6,7 @@
 #define VIGENERE_IC_COINCIDENCEINDEX_H
 
 #include <string>
-#include <map>
+#include <unordered_map>
 
 using namespace std;
 

@@ -7,7 +7,8 @@
 static string alphabet = "abcdefghijklmnopqrstuvwxyz";
 
 double CoincidenceIndex::calculateIoC(const string& input) {
-    map<char, int> occurrences;
+    unordered_map<char, int> occurrences;
+    int inputSize = input.size();
 
     for (char letter: input) {
         if (occurrences.count(letter) != 0) {
@@ -27,7 +28,7 @@ double CoincidenceIndex::calculateIoC(const string& input) {
         totalSum += letterIncidence;
     }
 
-    double ioc = totalSum / (input.size() * (input.size() - 1.0));
+    double ioc = totalSum / (inputSize * (inputSize - 1.0));
 
     return ioc;
 }
