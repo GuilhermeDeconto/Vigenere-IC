@@ -142,7 +142,7 @@ char main::frequencyAnalysis(string text)
 
     for(int i = 0; i < alphabet.length(); i++) {
         double chiSquared = 0;
-        for(auto const& [key, val] : portugueseProbability) {
+        for(auto const& [key, val] : englishProbability) {
             int newIndex = alphabet.find(key) + i;
             if (newIndex > 25) {
                 newIndex = newIndex - 26;

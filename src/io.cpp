@@ -9,8 +9,8 @@ string io::getStringFromFile()
     ifstream inFile;
 
     //Opening the input file
-    inFile.open("resources/cipher31.txt");
-//    inFile.open("resources/20201-teste2.txt");
+//    inFile.open("resources/cipher31.txt");
+    inFile.open("resources/20201-teste1.txt");
 
     stringstream strStream;
     //Reading file
