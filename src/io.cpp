@@ -10,7 +10,7 @@ string io::getStringFromFile()
 
     //Opening the input file
 //    inFile.open("resources/cipher31.txt");
-    inFile.open("resources/20201-teste1.txt");
+    inFile.open("resources/cipherpt.txt");
 
     stringstream strStream;
     //Reading file
