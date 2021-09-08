@@ -24,12 +24,16 @@ int main() {
     //Starting chrono clock
     auto start = chrono::steady_clock::now();
 
+    // Read input file
     string input = io::getStringFromFile();
 
+    // Estimate key length
     int keyLength = main::estimateKeyLength(input);
 
+    // Find key
     string key = main::findKey(input, keyLength);
 
+    // Decrypt text
     string decryptedText = main::decipher(input, key);
 
     cout << "Key Length: " << keyLength << endl;
@@ -37,6 +41,7 @@ int main() {
     cout << "Decrypted text wrote to output file" << endl;
 //    cout << decryptedText << endl;
 
+    // Writing decrypted text to output file
     ofstream out("output.txt");
     out << "Key Length: " << keyLength << endl;
     out << "Key: " << key << endl;
@@ -54,32 +59,44 @@ int main() {
 int main::estimateKeyLength(string inputFile) {
     double languageIoC = 0.06653846153846153;
     double randomIoC = 0.038461538461538464;
+    // Maximum guessed key length
+    int maxKeyLenght = 15;
 
+    // Declaring vector of pairs
     vector<pair<int, double>> possibleLength;
 
     int inputFileSize = inputFile.size();
 
+    // Declaring OpenMP directives in order to improve performance with multithreading
+    // pragma omp directive will split the work among all available threads in host system and,
+    // after work is done, it'll merge the results from all threads using reduction clause.
+    // Shared directive dictates which variables are shared between threads
     #pragma omp declare reduction (merge : vector<pair<int, double>> : omp_out.insert(omp_out.end(), omp_in.begin(), omp_in.end()))
-    #pragma omp parallel for default(none) shared(inputFileSize, inputFile, languageIoC, randomIoC) reduction(merge:possibleLength)
-    for (int i = 1; i < 15; ++i) {
+    #pragma omp parallel for default(none) shared(inputFileSize, inputFile, languageIoC, randomIoC, maxKeyLenght) reduction(merge:possibleLength)
+    for (int i = 1; i < maxKeyLenght; ++i) {
+        // Creating a buffer string with every n chars from input file
         string buffer;
 
         for (int j = 0; j < inputFileSize; j += i) buffer += inputFile[j];
 
+        // Calculating the index of coincidence
         double ioc = IndexOfCoincidence::calculateIoC(buffer);
 
+        // Calculating distances
         double distanceToLanguageIoC = languageIoC - ioc;
         double distanceToRandomIoC = abs(ioc - randomIoC);
 
+        // Checking for a better fit and adding it to my vector of pairs
         if (distanceToLanguageIoC < distanceToRandomIoC) {
             possibleLength.emplace_back(i, ioc);
         }
     }
 
+    // Declaring variables
     double bestIoC;
     int keyLength;
 
-
+    // Iterating the vector and looking for the lowes IoC
     for(auto const& [key, val] : possibleLength) {
         if(bestIoC < val) {
             bestIoC = val;
@@ -87,14 +104,19 @@ int main::estimateKeyLength(string inputFile) {
         }
     }
 
+    // Returning the char with lowest IoC
     return keyLength;
 }
 
 string main::decipher(string input, string key) {
     string decryptedText;
 
+    // Declaring OpenMP directive for parallel processing of for loop
+    // Shared variables are: input and key
+    // After work is done OpenMP will join results in decryptedText variable
     #pragma omp parallel for default(none) shared(input, key) reduction(+:decryptedText)
     for (int i = 0; i < input.size(); ++i) {
+        // Decrypt input file using the key found previously
         int position = (input[i] - key[i % key.length()] + 26) % 26;
         position += 'a';
         char letter = position;
@@ -105,16 +127,20 @@ string main::decipher(string input, string key) {
 
 string main::findKey(string input, int keyLength)
 {
+    // Declaring variables
     vector<string> text (keyLength);
     string key;
 
-    for (int i = 0; i < input.length(); i++) {
+    // Adding each char to their respective position in vector
+    for (int i = input.length(); i--;) {
         int position = i % keyLength;
         text[position] += input[i];
     }
 
+    // Declaring OpenMP directive for parallel processing of for loop
     #pragma omp parallel for default(none) shared(text) reduction(+:key)
     for (int i = 0; i < text.size(); ++i) {
+        // Finding the key in each row in vector
         key += frequencyAnalysis(text[i]);
     }
 
@@ -123,26 +149,34 @@ string main::findKey(string input, int keyLength)
 
 char main::frequencyAnalysis(string text)
 {
+    // Declaring vector of pairs
     vector<pair<char, int>> lettersFrequency;
 
-    for (int i = 0; i < text.length(); i++) {
+    // Looping through the text
+    for (int i = text.length(); i--;) {
         char charAt;
         charAt = text[i];
-        auto test = find_if(lettersFrequency.begin(), lettersFrequency.end(), [&](pair<char, int> const & ref) {
+        // Checking if char exists in lettersFrequency vector of pairs
+        auto letterFound = find_if(lettersFrequency.begin(), lettersFrequency.end(), [&](pair<char, int> const & ref) {
             return ref.first == charAt;
         });
-        if (test != lettersFrequency.end()) {
-            test->second++;
+        if (letterFound != lettersFrequency.end()) {
+            // If letter exists, add 1 to its value
+            letterFound->second++;
         } else {
+            // If letter doesn't exist, insert in vector
             lettersFrequency.emplace_back(charAt, 1);
         }
     }
 
-    vector<pair<char, int>> chiSquaredDictionary;
+    // Declaring chi squared vector
+    vector<pair<char, int>> chiSquaredVec;
 
-    for(int i = 0; i < alphabet.length(); i++) {
+    // Looping through alphabet (a,b,c,d...)
+    for(int i = alphabet.length(); i--;) {
         double chiSquared = 0;
         for(auto const& [key, val] : englishProbability) {
+            // Calculating the shifted letter
             int newIndex = alphabet.find(key) + i;
             if (newIndex > 25) {
                 newIndex = newIndex - 26;
@@ -150,24 +184,30 @@ char main::frequencyAnalysis(string text)
             auto test = find_if(lettersFrequency.begin(), lettersFrequency.end(), [&](pair<char, int> const & ref) {
                 return ref.first == alphabet.at(newIndex);
             });
+            // If letter is found, calculate its frequency
             if (test != lettersFrequency.end()) {
                 int letterFrequency = test->second;
                 double mtFreq = val * text.length();
+                // Calculating the chi squared
                 chiSquared += pow(letterFrequency - mtFreq, 2) / mtFreq;
             }
         }
-        chiSquaredDictionary.emplace_back(alphabet.at(i), chiSquared);
+        // Adding chi squared value for each letter to vector
+        chiSquaredVec.emplace_back(alphabet.at(i), chiSquared);
     }
 
+    // Declaring variables
     double lowerChiSquared = numeric_limits<double>::infinity();
     char keyLetter = ' ';
 
-    for (auto const& [key, val] : chiSquaredDictionary) {
+    // Check vector for the lowest chi squared value
+    for (auto const& [key, val] : chiSquaredVec) {
         if (val < lowerChiSquared ) {
             lowerChiSquared = val;
             keyLetter = key;
         }
     }
 
+    // Return the letter with the lowest chi squared
     return keyLetter;
 }

@@ -28,8 +28,8 @@ Test bench:
 
 File input: `cipher31.txt`
 
-Result:`Elapsed time in milliseconds: 706 ms`
+Result:`Elapsed time in milliseconds: 685 ms`
 
 File input: `cipherpt.txt`
 
-Result:`Elapsed time in milliseconds: 5 ms`
+Result:`Elapsed time in milliseconds: 3 ms`
