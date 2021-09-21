@@ -15,9 +15,9 @@
 class main {
 
 public:
-    static int estimateKeyLength(string inputFile);
-    static string findKey(string inputFile, int keyLength);
-    static char frequencyAnalysis(string text);
+    static int estimateKeyLength(string inputFile, const string& prob);
+    static string findKey(string inputFile, int keyLength, const string& prob);
+    static char frequencyAnalysis(string text, const string& prob);
     static string decipher(string input, string key);
 
 };

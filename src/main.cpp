@@ -6,32 +6,35 @@ using namespace std;
 
 static string alphabet = "abcdefghijklmnopqrstuvwxyz";
 
-static  vector<pair<char, double>> englishProbability = {
+vector<pair<char, double>> englishProbability = {
         {'a',0.08167}, {'b',0.01492}, {'c',0.02782}, {'d',0.04253}, {'e',0.12702}, {'f',0.02228},
         {'g',0.02015}, {'h',0.06094}, {'i',0.06966}, {'j',0.00153}, {'k',0.00772}, {'l',0.04025},
         {'m',0.02406}, {'n',0.06749}, {'o',0.07507}, {'p',0.01929}, {'q',0.00095}, {'r',0.05987},
         {'s',0.06327}, {'t',0.09056}, {'u',0.02758}, {'v',0.00978}, {'w',0.02360}, {'x',0.00150},
         {'y',0.01974}, {'z',0.00074}};
 
-static vector<pair<char, double>> portugueseProbability = {
+vector<pair<char, double>> portugueseProbability = {
         {'a',0.14634}, {'b',0.01043}, {'c',0.03882}, {'d',0.04992}, {'e',0.1257}, {'f',0.01023},
         {'g',0.01303}, {'h',0.00781}, {'i',0.06186}, {'j',0.00397}, {'k',0.00015}, {'l',0.02779},
         {'m',0.04738}, {'n',0.04446}, {'o',0.09735}, {'p',0.02523}, {'q',0.01204}, {'r',0.06530},
         {'s',0.06805}, {'t',0.04336}, {'u',0.03639}, {'v',0.01575}, {'w',0.00037}, {'x',0.00253},
         {'y',0.00006}, {'z',0.0047}};
 
-int main() {
+int main(int argc, char *argv[]) {
     //Starting chrono clock
     auto start = chrono::steady_clock::now();
 
+    string argPath = argv[1] ? argv[1] : "";
+    string prob = argv[2] ? argv[2] : "eng";
+
     // Read input file
-    string input = io::getStringFromFile();
+    string input = io::getStringFromFile(argPath);
 
     // Estimate key length
-    int keyLength = main::estimateKeyLength(input);
+    int keyLength = main::estimateKeyLength(input, prob);
 
     // Find key
-    string key = main::findKey(input, keyLength);
+    string key = main::findKey(input, keyLength, prob);
 
     // Decrypt text
     string decryptedText = main::decipher(input, key);
@@ -43,6 +46,7 @@ int main() {
 
     // Writing decrypted text to output file
     ofstream out("output.txt");
+    out << "File size: " << input.length() - 1 << endl;
     out << "Key Length: " << keyLength << endl;
     out << "Key: " << key << endl;
     out << decryptedText << endl;
@@ -56,8 +60,19 @@ int main() {
     return 0;
 }
 
-int main::estimateKeyLength(string inputFile) {
-    double languageIoC = 0.06653846153846153;
+int main::estimateKeyLength(string inputFile, const string& prob) {
+    double languageIoC;
+//    double languageIoC = 0.06653846153846153; //eng
+//    double languageIoC = 0.07461538461538461; //ptbr
+
+    if (prob == "eng"){
+        languageIoC = 0.06653846153846153;
+    }else if (prob == "pt"){
+        languageIoC = 0.07461538461538461;
+    }else{
+        languageIoC = 0.06653846153846153;
+    }
+
     double randomIoC = 0.038461538461538464;
     // Maximum guessed key length
     int maxKeyLenght = 15;
@@ -125,7 +140,7 @@ string main::decipher(string input, string key) {
     return decryptedText;
 }
 
-string main::findKey(string input, int keyLength)
+string main::findKey(string input, int keyLength, const string& prob)
 {
     // Declaring variables
     vector<string> text (keyLength);
@@ -138,17 +153,26 @@ string main::findKey(string input, int keyLength)
     }
 
     // Declaring OpenMP directive for parallel processing of for loop
-    #pragma omp parallel for default(none) shared(text) reduction(+:key)
+    #pragma omp parallel for default(none) shared(text, prob) reduction(+:key)
     for (int i = 0; i < text.size(); ++i) {
         // Finding the key in each row in vector
-        key += frequencyAnalysis(text[i]);
+        key += frequencyAnalysis(text[i], prob);
     }
 
     return key;
 }
 
-char main::frequencyAnalysis(string text)
+char main::frequencyAnalysis(string text, const string& prob)
 {
+    vector<pair<char, double>> languageProb;
+
+    if (prob == "eng"){
+        languageProb = englishProbability;
+    }else if (prob == "pt"){
+        languageProb = portugueseProbability;
+    }else{
+        languageProb = englishProbability;
+    }
     // Declaring vector of pairs
     vector<pair<char, int>> lettersFrequency;
 
@@ -175,7 +199,7 @@ char main::frequencyAnalysis(string text)
     // Looping through alphabet (a,b,c,d...)
     for(int i = alphabet.length(); i--;) {
         double chiSquared = 0;
-        for(auto const& [key, val] : englishProbability) {
+        for(auto const& [key, val] : languageProb) {
             // Calculating the shifted letter
             int newIndex = alphabet.find(key) + i;
             if (newIndex > 25) {

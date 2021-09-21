@@ -14,7 +14,7 @@ using namespace std;
 
 class io {
 
-public: static string getStringFromFile();
+public: static string getStringFromFile(const string& path);
 
 };
 
